@@ -3,14 +3,34 @@
   "version": "0.1.0",
   "description": "The step renderer shared by `taifoon up` and `jev run`: → ● ⎿ ✓ ! ✗ lines, elapsed ms, a spinner, NO_COLOR and non-TTY aware. One ESM file, no dependencies, no import-time side effects.",
   "license": "MIT",
-  "author": { "name": "Taifoon", "email": "yawning.monsoon@proton.me", "url": "https://github.com/taifoon-io" },
-  "repository": { "type": "git", "url": "git+https://github.com/taifoon-io/term.git" },
+  "author": {
+    "name": "Taifoon",
+    "email": "yawning.monsoon@proton.me",
+    "url": "https://github.com/taifoon-io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taifoon-io/term.git"
+  },
   "type": "module",
   "main": "./term.mjs",
   "types": "./index.d.ts",
-  "exports": { ".": { "types": "./index.d.ts", "import": "./term.mjs" } },
-  "files": ["term.mjs", "index.d.ts"],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./term.mjs"
+    }
+  },
+  "files": [
+    "term.mjs",
+    "index.d.ts",
+    "README.md"
+  ],
   "sideEffects": false,
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/term.test.mjs" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/term.test.mjs"
+  }
 }
