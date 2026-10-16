@@ -88,3 +88,19 @@ test('the one filter: chain by name or id, protocol, kind, actor; empty passes a
   assert.ok(keep({ kind: 'lost' }).length > 0 && keep({ kind: 'lost' }).every((e) => e.data.kind === 'lost'));
   assert.ok(keep({ actor: 'twigster-example' }).length > 0);
 });
+
+test('every coord lane decodes to a named row: its lane as the kind, never a JSON dump', () => {
+  const lanes = readFileSync(new URL('./fixtures/lanes-sample.sse', import.meta.url), 'utf8').split('\n\n').filter((b) => /^data:/m.test(b)).map((b) => ({
+    event: b.match(/^event: (.*)$/m)?.[1] ?? 'message', data: JSON.parse(b.split('\n').filter((l) => l.startsWith('data:')).map((l) => l.slice(5)).join('')),
+  }));
+  const kinds = new Set();
+  for (const ev of lanes) {
+    const r = describe(ev); kinds.add(r.kind);
+    assert.equal(r.kind, ev.event);
+    assert.ok(r.summary && !/^\{|":/.test(r.summary), `${ev.event}: ${r.summary}`);
+  }
+  assert.deepEqual([...kinds].sort(), ['action', 'flow', 'hello', 'jev', 'job', 'pool', 'quota', 'root']);
+  const pool = describe(lanes.find((e) => e.event === 'pool'));
+  assert.match(pool.summary, /^seller 0x[0-9a-f]{4}…[0-9a-f]{4} · [0-9,]+\/[0-9,]+ settled/);
+  assert.match(pool.summary, /snapshot$/);
+});

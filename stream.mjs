@@ -85,19 +85,55 @@ export function describe(ev, { wide = false } = {}) {
     if (kind === 'lag' && d.lag) { row.summary = `${num(d.lag.behind)} behind${d.lag.dropped ? ' · the server cut this subscriber' : ''}`; row.tone = 'warn'; }
     return row;
   }
-  // the coord stream's lanes
-  if (kind === 'hello') { row.summary = `lanes ${(d.lanes ?? []).join(', ')}`; row.tone = 'quiet'; return row; }
-  if (kind === 'action' || d.action) {
-    row.kind = 'action'; row.chain = chainName(d.chain_id); row.where = d.entity || d.label || '';
-    row.summary = d.message || [d.action, d.tx ? `tx ${short(d.tx, wide)}` : ''].filter(Boolean).join(' · ');
-    row.tone = d.action === 'unrecognised' ? 'warn' : 'info'; return row;
+  // the coord stream's lanes (/v1/stream): each event names its lane; its own `kind` says seed (the snapshot replayed on connect) or what it is
+  const lane = String(d.lane ?? ev?.event ?? kind);
+  row.kind = lane;
+  const seed = d.kind === 'seed';
+  const tx = (h) => (h ? `tx ${short(h, wide)}` : '');
+  const join = (...xs) => xs.filter((x) => x !== '' && x != null && x !== false).join(' · ');
+  switch (lane) {
+    case 'hello': row.summary = `lanes ${(d.lanes ?? []).join(', ')}`; row.tone = 'quiet'; break;
+    case 'action':
+      row.chain = chainName(d.chain_id); row.where = d.entity || d.label || '';
+      row.summary = d.message ? String(d.message).replace(/\s·\s+·/g, ' ·') : join(d.label, d.action, tx(d.tx));
+      row.tone = d.action === 'unrecognised' ? 'warn' : 'info'; break;
+    case 'jev':
+      row.chain = chainName(d.chain_id ?? d.subject?.chainId); row.where = 'jev';
+      row.summary = join(d.action || d.kind, d.subject?.label, typeof d.confidence === 'number' ? `conf ${d.confidence.toFixed(2)}` : '', d.anchor?.status === 'ok' ? 'anchored' : d.anchor?.status, tx(d.tx || d.anchor?.tx));
+      row.tone = 'good'; break;
+    case 'job':
+      row.chain = chainName(d.chainId ?? d.chain_id); row.where = d.venue || 'erc8183';
+      row.summary = join(`job ${d.id ?? '?'}`, d.state, d.ending, d.seller ? `seller ${short(d.seller, wide)}` : '');
+      row.tone = 'good'; break;
+    case 'pool':
+      row.where = 'pool';
+      row.summary = join(d.seller ? `seller ${short(d.seller, wide)}` : '', d.jobs != null ? `${num(d.settled ?? 0)}/${num(d.jobs)} settled` : '', d.cheated ? `${num(d.cheated)} cheated` : '', d.premium_label ? `premium ${d.premium_label}` : '', d.vault ? `vault ${short(d.vault, wide)}` : '');
+      row.tone = d.cheated ? 'warn' : 'info'; break;
+    case 'root': {
+      const step = /superroot:(\w+)/.exec(String(d.addr ?? ''))?.[1];
+      row.chain = 'taifoon'; row.where = 'superroot';
+      row.summary = join(step, d.root ? `root ${short(d.root.startsWith('0x') ? d.root : `0x${d.root}`, wide)}` : '', d.leaf_count != null ? `${num(d.leaf_count)} leaves` : '', d.chains != null ? `${d.chains} chains` : '');
+      row.tone = 'info'; break;
+    }
+    case 'flow':
+      row.where = 'onboarding';
+      row.summary = join(d.live != null ? `${num(d.live)} live flow${d.live === 1 ? '' : 's'}` : '', d.harvest_age_seconds != null ? `harvest ${num(d.harvest_age_seconds)} s old${d.stale ? ' (stale)' : ''}` : '', d.registry_records != null ? `${num(d.registry_records)} agents harvested` : '');
+      row.tone = d.stale ? 'warn' : 'info'; break;
+    case 'quota': {
+      const f = d.grades?.free ?? d.free; const b = d.grades?.bought;
+      row.where = 'quota';
+      row.summary = join(f ? `free grades ${f.left}/${f.per_user ?? f.calls} left` : '', b ? `bought ${b.left}` : '', d.price?.grid_per_grade != null ? `${d.price.grid_per_grade} GRID a grade` : '', d.anon_today ? `anonymous today ${num(d.anon_today.used)}/${num(d.anon_today.cap)}` : '');
+      row.tone = 'quiet'; break;
+    }
+    default: {
+      // a lane this view does not know yet: its scalar fields, named, never a JSON dump
+      const parts = Object.entries(d).filter(([k, v]) => !['addr', 'lane', 'ts'].includes(k) && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')).slice(0, 5)
+        .map(([k, v]) => `${k} ${typeof v === 'string' && /^0x[0-9a-fA-F]{20,}$/.test(v) ? short(v, wide) : String(v).slice(0, 40)}`);
+      row.summary = parts.join(' · ') || lane; row.tone = 'quiet';
+    }
   }
-  if (kind === 'job' || d.ending !== undefined) {
-    row.kind = 'job'; row.chain = chainName(d.chainId ?? d.chain_id); row.where = d.venue || 'erc8183';
-    row.summary = [`job ${d.id ?? '?'}`, d.state, d.ending].filter(Boolean).join(' · '); row.tone = 'good'; return row;
-  }
-  row.summary = (() => { try { const s = JSON.stringify(d); return s.length > 160 ? `${s.slice(0, 157)}…` : s; } catch { return ''; } })();
-  row.tone = 'quiet';
+  if (seed) { row.state = 'seed'; row.summary = `${row.summary} · snapshot`; row.tone = 'quiet'; }
+  if (typeof d.ts === 'number') row.at = d.ts;
   return row;
 }
 

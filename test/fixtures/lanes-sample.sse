@@ -1,0 +1,172 @@
+retry: 3000
+event: hello
+data: {"lanes":["job","action","flow","root","jev","pool","quota"],"what":{"job":"ERC-8183 jobs on Base, Arc and 4663 as they appear or change ending (the observatory)","action":"every action of the layer’s own contracts: the devnet live (hook, verdicts, captures, stamps, feedback, decisions) and every live contract of ours on Base, Arbitrum, Arc, Robinhood, Monad, the Taifoon chain and Solana devnet, plus x402 settlements, from the genome watcher (/v1/genome/live)","flow":"the onboarding flows resurfaced from the harvest: how many are live and how fresh the harvest is","root":"the superroot the swarm recomputes every 10 s: root, leaf count, chains included","jev":"every decision the judge makes for the layer, as a genome line with its devnet transaction","pool":"per-seller pools: the settled record, the premium interval, the vault figures","quota":"the caller’s own grades: free grades left, bought grades, the price of a block of three (needs an identity)"},"cadence_ms":{"job":20000,"action":10000,"flow":60000,"root":10000,"jev":10000,"pool":60000,"quota":30000},"snapshot":"https://www.taifoon.io/v1/stream/snapshot?lanes=job,action,flow,root,jev,pool,quota","fed_by":"pipe","pipe":"https://www.taifoon.io/v1/pipe/stream","pipe_lanes":["root","job","jev"],"max_connection_ms":600000,"at":1792171599292,"quota":"address"}
+
+event: flow
+id: flow:1:65374
+data: {"live":1,"harvest_age_seconds":700,"stale":false,"jobs_seen":50,"registry_records":65374,"addr":"T:1792171599/flow:live/1","lane":"flow","ts":1792171599341}
+
+event: root
+id: root:c88fd9e67eef9f3d
+data: {"root":"c88fd9e67eef9f3d3375513fd1b9588a77ce5112750034c20073d93010ddee17","at":1792171582,"leaf_count":15699,"peak_count":69,"chains":69,"addr":"T:1792171599/superroot:observe/c88fd9e67e","lane":"root","ts":1792171599353}
+
+event: action
+id: action:0xa51428f61ae62fa80718697daaa692789239b63bba849538b8a9064829646e10:T:1792171467/token:transfer/0xa51428…6e10
+data: {"addr":"T:1792171467/token:transfer/0xa51428…6e10","ts":1792171467000,"entity":"token","action":"transfer","chain_id":36927,"tx":"0xa51428f61ae62fa80718697daaa692789239b63bba849538b8a9064829646e10","block":1909416,"label":"dUSDC (devnet test token)","message":"dUSDC (devnet test token): Transfer(from=0x4070e0…5f5B to=0xab9e7F…390A value=10000) · tx 0xa51428…6e10","lane":"action"}
+
+event: action
+id: action:0x74ed993a1307adc67a6ca7aa0753b1e7e99dfc53dc393e7a2c509987268eff4c:T:1792171479/token:transfer/0x74ed99…ff4c
+data: {"addr":"T:1792171479/token:transfer/0x74ed99…ff4c","ts":1792171479000,"entity":"token","action":"transfer","chain_id":36927,"tx":"0x74ed993a1307adc67a6ca7aa0753b1e7e99dfc53dc393e7a2c509987268eff4c","block":1909422,"label":"dUSDC (devnet test token)","message":"dUSDC (devnet test token): Transfer(from=0xab9e7F…390A to=0x90F79b…b906 value=10000) · tx 0x74ed99…ff4c","lane":"action"}
+
+event: action
+id: action:3692781:0x5bfc7aa1c81b38dd6d7192649f02d78f58436661dbbd43d6028c9da91107b505:0:T:1791997924/proof:unrecognised/0x5bfc7aa1c81b38dd6d7192649f02d78f58436661dbbd43d6028c9da91107b505
+data: {"action":"unrecognised","addr":"T:1791997924/proof:unrecognised/0x5bfc7aa1c81b38dd6d7192649f02d78f58436661dbbd43d6028c9da91107b505","address":"0xd00892925f085b366d82b8b577b1b303b7b1b3f9","args":null,"block":1192156,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"proof","event":null,"id":"0x5bfc7aa1c81b38dd6d7192649f02d78f58436661dbbd43d6028c9da91107b505","label":"TaifoonProtocolVerifier","log_index":0,"message":"Taifoon mainnet · TaifoonProtocolVerifier: unrecognised event(topic0=0x1a594081ae893ab78e67d9b9e843547318164322d32c65369d78a96172d9dc8f)","system":"protocol-verifier","ts":1791997924000,"tx":"0x5bfc7aa1c81b38dd6d7192649f02d78f58436661dbbd43d6028c9da91107b505","source":"genome-live","lane":"action"}
+
+event: action
+id: action:3692781:0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b:0:T:1791997924/contract:ownership-transferred/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b
+data: {"action":"ownership-transferred","addr":"T:1791997924/contract:ownership-transferred/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","address":"0xbb14351b345d8d518a605edd0406723a88a18787","args":{"newOwner":"0x14C4274110F1c183Eec6095F3E6547790A258fae","previousOwner":"0x0000000000000000000000000000000000000000"},"block":1192160,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"contract","event":"OwnershipTransferred","id":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","label":"TsulDonut","log_index":0,"message":"Taifoon mainnet · TsulDonut: OwnershipTransferred(previousOwner=0x0000000000000000000000000000000000000000 newOwner=0x14C4274110F1c183Eec6095F3E6547790A258fae)","system":"coord-settlement","ts":1791997924000,"tx":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","source":"genome-live","lane":"action"}
+
+event: action
+id: action:3692781:0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b:1:T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b
+data: {"action":"unrecognised","addr":"T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","address":"0xbb14351b345d8d518a605edd0406723a88a18787","args":null,"block":1192160,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"contract","event":null,"id":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","label":"TsulDonut","log_index":1,"message":"Taifoon mainnet · TsulDonut: unrecognised event(topic0=0x21eb548722a564f6e09f039f7aa858ae94c911910f3823b37af2250eeca4f403)","system":"coord-settlement","ts":1791997924000,"tx":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","source":"genome-live","lane":"action"}
+
+event: action
+id: action:3692781:0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b:2:T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b
+data: {"action":"unrecognised","addr":"T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","address":"0xbb14351b345d8d518a605edd0406723a88a18787","args":null,"block":1192160,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"contract","event":null,"id":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","label":"TsulDonut","log_index":2,"message":"Taifoon mainnet · TsulDonut: unrecognised event(topic0=0xc357d0331f0243d14eaf6568b1ebe009f5be395f949d4d357377d79eac7a9b6e)","system":"coord-settlement","ts":1791997924000,"tx":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","source":"genome-live","lane":"action"}
+
+event: action
+id: action:3692781:0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b:3:T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b
+data: {"action":"unrecognised","addr":"T:1791997924/contract:unrecognised/0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","address":"0xbb14351b345d8d518a605edd0406723a88a18787","args":null,"block":1192160,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"contract","event":null,"id":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","label":"TsulDonut","log_index":3,"message":"Taifoon mainnet · TsulDonut: unrecognised event(topic0=0x363c56730e510c61b9b1c8da206585b5f5fa0eb1f76e05c2fcf82ee006fff9f5)","system":"coord-settlement","ts":1791997924000,"tx":"0xfceb9705e1758e2b821156dda46ec8dd4ba7c1eb465baf5583dbca426c8cbc4b","source":"genome-live","lane":"action"}
+
+event: action
+id: action:3692781:0x6f4a67759dacd290e16915bc0b2c14a631e035e6ea3fed78834a775d069f5ac2:0:T:1791997924/contract:unrecognised/0x6f4a67759dacd290e16915bc0b2c14a631e035e6ea3fed78834a775d069f5ac2
+data: {"action":"unrecognised","addr":"T:1791997924/contract:unrecognised/0x6f4a67759dacd290e16915bc0b2c14a631e035e6ea3fed78834a775d069f5ac2","address":"0xbb14351b345d8d518a605edd0406723a88a18787","args":null,"block":1192167,"chain":"Taifoon mainnet","chain_id":3692781,"entity":"contract","event":null,"id":"0x6f4a67759dacd290e16915bc0b2c14a631e035e6ea3fed78834a775d069f5ac2","label":"TsulDonut","log_index":0,"message":"Taifoon mainnet · TsulDonut: unrecognised event(topic0=0xbfa6acf022b8bc9f4df4ed4ce022b7d18db613e8a4864052b907aac9a7521b13)","system":"coord-settlement","ts":1791997924000,"tx":"0x6f4a67759dacd290e16915bc0b2c14a631e035e6ea3fed78834a775d069f5ac2","source":"genome-live","lane":"action"}
+
+event: action
+id: action:42161:0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df::T:1792023991/x402:settle/0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df
+data: {"action":"settle","addr":"T:1792023991/x402:settle/0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df","address":"0xaf88d065e77c8cc2239327c5edb3a432268e5831","args":null,"block":514899597,"chain":"Arbitrum One","chain_id":42161,"entity":"x402","event":"AuthorizationUsed","id":"0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df","label":"USDC on Arbitrum One (x402 settlement by our payer)","log_index":null,"message":"Arbitrum One · x402 settlement proved by the settle watcher · tx 0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df","system":"x402","ts":1792023991000,"tx":"0x735696d885c1d1ee289d10e5ea4effcb24821e1128a64b27edf5118be3bbb1df","source":"genome-live","lane":"action"}
+
+event: action
+id: action:5042:0x294656d987dc4614b144f7021897ce6c742d7e11268080e805bceca8d6a1f397:12:T:1792050367/bridge:bridged/0x294656d987dc4614b144f7021897ce6c742d7e11268080e805bceca8d6a1f397
+data: {"action":"bridged","addr":"T:1792050367/bridge:bridged/0x294656d987dc4614b144f7021897ce6c742d7e11268080e805bceca8d6a1f397","address":"0xbf4283b791d5a5541f01bc93ef5dd9b9dc8f334c","args":{"amount":"1380000","burned":"1360000","destinationDomain":"3","fee":"20000","minFinalityThreshold":"1000","mintRecipient":"0x0000000000000000000000004b10444b6f144a8766d850eb3e7bd3afcacc5e68","partner":"0xc1822407357351490b9779e52f91a707ffa58fff198560ae5b2bf829be7abc6a","partnerShare":"0","sender":"0x4B10444b6F144a8766d850Eb3e7BD3aFcacC5E68"},"block":26059195,"chain":"Arc","chain_id":5042,"entity":"bridge","event":"Bridged","id":"0x294656d987dc4614b144f7021897ce6c742d7e11268080e805bceca8d6a1f397","label":"CctpFeeRouterV3 (Arc)","log_index":12,"message":"Arc · CctpFeeRouterV3 (Arc): Bridged(partner=0xc1822407357351490b9779e52f91a707ffa58fff198560ae5b2bf829be7abc6a sender=0x4B10444b6F144a8766d850Eb3e7BD3aFcacC5E68 destinationDomain=3 mintRecipient=0x0000000000000000000000004b10444b6f144a8766d850eb3e7bd3afcacc5e68 amount=1380000 fee=20000)","system":"cctp-router","ts":1792050367000,"tx":"0x294656d987dc4614b144f7021897ce6c742d7e11268080e805bceca8d6a1f397","source":"genome-live","lane":"action"}
+
+event: action
+id: action:8453:0x4843ab8b599aa630032e950684c752c1789244cf9e168032f9c7838f187fbd8e:200:T:1792068657/verdict:unrecognised/0x4843ab8b599aa630032e950684c752c1789244cf9e168032f9c7838f187fbd8e
+data: {"action":"unrecognised","addr":"T:1792068657/verdict:unrecognised/0x4843ab8b599aa630032e950684c752c1789244cf9e168032f9c7838f187fbd8e","address":"0x5242de388a846d16641744deb095ed63990e7be8","args":null,"block":52639655,"chain":"Base","chain_id":8453,"entity":"verdict","event":null,"id":"0x4843ab8b599aa630032e950684c752c1789244cf9e168032f9c7838f187fbd8e","label":"JudgeAdapterV5","log_index":200,"message":"Base · JudgeAdapterV5: unrecognised event(topic0=0x3f9d89195bba4f752b974bcecfebc0e4c86165a32be9b77267da03e1d02d0805)","system":"jev","ts":1792068657000,"tx":"0x4843ab8b599aa630032e950684c752c1789244cf9e168032f9c7838f187fbd8e","source":"genome-live","lane":"action"}
+
+event: action
+id: action:8453:0x8c958a0777d2b7b02560fe83f3067ea488cff9e12004a378ab2465c8c2226697:187:T:1792137593/verdict:evaluator-set/0x2940Fcd7FF7eA3c2f17136e8B1177eef3812CC2a
+data: {"action":"evaluator-set","addr":"T:1792137593/verdict:evaluator-set/0x2940Fcd7FF7eA3c2f17136e8B1177eef3812CC2a","address":"0x5242de388a846d16641744deb095ed63990e7be8","args":{"allowed":true,"who":"0x2940Fcd7FF7eA3c2f17136e8B1177eef3812CC2a"},"block":52674123,"chain":"Base","chain_id":8453,"entity":"verdict","event":"EvaluatorSet","id":"0x2940Fcd7FF7eA3c2f17136e8B1177eef3812CC2a","label":"JudgeAdapterV5","log_index":187,"message":"Base · JudgeAdapterV5: EvaluatorSet(who=0x2940Fcd7FF7eA3c2f17136e8B1177eef3812CC2a allowed=true)","system":"jev","ts":1792137593000,"tx":"0x8c958a0777d2b7b02560fe83f3067ea488cff9e12004a378ab2465c8c2226697","source":"genome-live","lane":"action"}
+
+event: action
+id: action:8453:0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59::T:1792160171/x402:settle/0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59
+data: {"action":"settle","addr":"T:1792160171/x402:settle/0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59","address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","args":null,"block":52685412,"chain":"Base","chain_id":8453,"entity":"x402","event":"AuthorizationUsed","id":"0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59","label":"USDC on Base (x402 settlement by our payer)","log_index":null,"message":"Base · x402 settlement proved by the settle watcher · tx 0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59","system":"x402","ts":1792160171000,"tx":"0xf728cbbfa565ccd704a582e1d681c6ca6238cbd5785002716b7001ca8f6a1d59","source":"genome-live","lane":"action"}
+
+event: action
+id: action:8453:0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7::T:1792160225/x402:settle/0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7
+data: {"action":"settle","addr":"T:1792160225/x402:settle/0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7","address":"0x833589fcd6edb6e08f4c7c32d4f71b54bda02913","args":null,"block":52685439,"chain":"Base","chain_id":8453,"entity":"x402","event":"AuthorizationUsed","id":"0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7","label":"USDC on Base (x402 settlement by our payer)","log_index":null,"message":"Base · x402 settlement proved by the settle watcher · tx 0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7","system":"x402","ts":1792160225000,"tx":"0x466ecaa099f6b3347672a9eeae8bd1cdec79183098ee24233aabd748cdabd8a7","source":"genome-live","lane":"action"}
+
+event: quota
+id: quota:1792171599445
+data: {"who":"address","unit":"grade","grades":{"free":{"per_user":3,"used":1,"left":2},"bought":{"left":0,"blocks":0},"per_block":3,"per_minute":5},"free":{"calls":3,"used":1,"left":2},"credits":{"left":0,"blocks":0},"burst":{"per_minute":5,"used_this_minute":0},"anon_today":{"cap":150,"used":52},"price":{"grid_per_grade":5,"grid_per_call":5,"grades_per_block":3,"grid_per_block":15,"grid_usdc":0.01,"usdc_per_block":0.15,"peg_source":"oracle"},"buy":"sign in or send an X-API-Key; then top up the balance (GET /v1/access/quote?usdc=1&chainId=8453): one balance pays grades, records and calls","gpu":{"usdc_per_block":1,"lanes":["nemotron/chat","auditor/generate","wizard/chat","studio/chat"],"purchases":[],"usdc_bought":"0.000000","balance":"GET https://api.taifoon.dev/gpu/credits with the same X-API-Key (the gate debits per call; only Base purchases count there)","buy":"POST /v1/judge/credits { product: \"gpu\", blocks, chainId: 8453 } → send the transfer → sign creditMessage(credit_to, 8453, tx, \"gpu\") → POST /v1/judge/credits/confirm { tx, chainId: 8453, signature, product: \"gpu\" }; no key yet: GET /v1/judge/credits/key?product=gpu"},"deprecated":"free.calls / credits / price.grid_per_call are the old names of grades.free.per_user / grades.bought / price.grid_per_grade; they go in the next release. A grade is Taifoon's composed grade (facts + answers + verdict + record); purchases made as calls count one for one.","lane":"quota","ts":1792171599445}
+
+event: jev
+id: jev:decision-1792169305127-c85feea42d
+data: {"addr":"T:1792169305/jev:grade/RUBRIC_v2 · hs_f…","ts":1792169305127,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items ·  · conf 0.00 · tx 0x864cdc81…","tx":"0x864cdc81bdf3315230094a728e6cfb67a069609f52a7ef3c10f7d74ba17be7c8","id":"decision-1792169305127-c85feea42d","kind":"grade","confidence":0,"digest":"0xc85feea42d6d35c5a8f907b6251d2896eff5b372c27d73ee249819c916329f60","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_f492a51ca3a8854577f60bde","ref":"hs_f492a51ca3a8854577f60bde"},"anchor":{"tx":"0x864cdc81bdf3315230094a728e6cfb67a069609f52a7ef3c10f7d74ba17be7c8","status":"ok","block":1908346},"lane":"jev"}
+
+event: jev
+id: jev:decision-1792169534099-0ac5809cd1
+data: {"addr":"T:1792169534/jev:grade/RUBRIC_v2 · hs_c…","ts":1792169534099,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items ·  · conf 0.00 · tx 0x8aa31a76…","tx":"0x8aa31a762ef2978bde595544b1389265ae18923c5ea4172bbb980bb4550d9794","id":"decision-1792169534099-0ac5809cd1","kind":"grade","confidence":0,"digest":"0x0ac5809cd108ad0679365b84b61724d8975ce06af3a437caa46d04ee62d5113b","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_ce977235c240ec86fee033a4","ref":"hs_ce977235c240ec86fee033a4"},"anchor":{"tx":"0x8aa31a762ef2978bde595544b1389265ae18923c5ea4172bbb980bb4550d9794","status":"ok","block":1908458},"lane":"jev"}
+
+event: jev
+id: jev:decision-1792169543145-6e3fe4b88f
+data: {"addr":"T:1792169543/jev:grade/RUBRIC_v2 · hs_f…","ts":1792169543145,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items ·  · conf 0.00 · tx 0xc19e24f5…","tx":"0xc19e24f57e7e08648567f3d44e34f6ae87322f14684633d2bf4472904b30d910","id":"decision-1792169543145-6e3fe4b88f","kind":"grade","confidence":0,"digest":"0x6e3fe4b88f4ffa72c62dbd6696c5facd7c2b65ff23e129e4729c851bfe812287","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_fa069420d7966fb4c6b49474","ref":"hs_fa069420d7966fb4c6b49474"},"anchor":{"tx":"0xc19e24f57e7e08648567f3d44e34f6ae87322f14684633d2bf4472904b30d910","status":"ok","block":1908462},"lane":"jev"}
+
+event: jev
+id: jev:decision-1792169711991-7305f57fbe
+data: {"addr":"T:1792169711/jev:grade/RUBRIC_v2 · hs_d…","ts":1792169711991,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items ·  · conf 0.00 · tx 0xdd99281b…","tx":"0xdd99281ba6a8e58fd000101701d17434fb9b0d80c37a6858ed1efc658cb96cf4","id":"decision-1792169711991-7305f57fbe","kind":"grade","confidence":0,"digest":"0x7305f57fbe38bf8b14ed9a79836416c77f38cb74d7bde0cad4c66de5c02a3eb8","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_d09fe81c17c5e4bc4a926557","ref":"hs_d09fe81c17c5e4bc4a926557"},"anchor":{"tx":"0xdd99281ba6a8e58fd000101701d17434fb9b0d80c37a6858ed1efc658cb96cf4","status":"ok","block":1908547},"lane":"jev"}
+
+event: jev
+id: jev:decision-1792170024445-68a30a0434
+data: {"addr":"T:1792170024/jev:grade/RUBRIC_v2 · hs_f…","ts":1792170024445,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items · spec_met=yes unsupported_claim=no ending=complete cheat_shaped=no · conf 0.70 · unanchored","tx":null,"id":"decision-1792170024445-68a30a0434","kind":"grade","confidence":0.7,"digest":"0x68a30a0434b0254a87a40f9897ab47cf3aa47503aee693e19f470b9b2a1b1a88","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_f492a51ca3a8854577f60bde","ref":"hs_f492a51ca3a8854577f60bde"},"anchor":null,"lane":"jev"}
+
+event: jev
+id: jev:decision-1792170025997-4866df8d68
+data: {"addr":"T:1792170025/jev:grade/RUBRIC_v2 · hs_c…","ts":1792170025997,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items · spec_met=yes unsupported_claim=no ending=complete cheat_shaped=no · conf 0.38 · unanchored","tx":null,"id":"decision-1792170025997-4866df8d68","kind":"grade","confidence":0.38,"digest":"0x4866df8d688f445b015e3eb06c8a0ae31274abb4a0567f2bbbd7d3e387279d3f","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_ce977235c240ec86fee033a4","ref":"hs_ce977235c240ec86fee033a4"},"anchor":null,"lane":"jev"}
+
+event: jev
+id: jev:decision-1792170028639-7c22322a96
+data: {"addr":"T:1792170028/jev:grade/RUBRIC_v2 · hs_f…","ts":1792170028639,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items · spec_met=yes unsupported_claim=no ending=complete cheat_shaped=no · conf 0.74 · unanchored","tx":null,"id":"decision-1792170028639-7c22322a96","kind":"grade","confidence":0.74,"digest":"0x7c22322a96db798d6ccadc7a41767fabd4bfec0d9729b79e68b378b652a987c3","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_fa069420d7966fb4c6b49474","ref":"hs_fa069420d7966fb4c6b49474"},"anchor":null,"lane":"jev"}
+
+event: jev
+id: jev:decision-1792170032467-3a86057ae6
+data: {"addr":"T:1792170032/jev:grade/RUBRIC_v2 · hs_d…","ts":1792170032467,"entity":"jev","action":"grade","chain_id":36927,"message":"graded a batch of items · spec_met=yes unsupported_claim=no ending=complete cheat_shaped=no · conf 0.36 · unanchored","tx":null,"id":"decision-1792170032467-3a86057ae6","kind":"grade","confidence":0.36,"digest":"0x3a86057ae63df02bf15e6b036679de944968ad4a7d07eea572d230b573727f1e","subject":{"chainId":36927,"label":"RUBRIC_v2 · hs_d09fe81c17c5e4bc4a926557","ref":"hs_d09fe81c17c5e4bc4a926557"},"anchor":null,"lane":"jev"}
+
+event: job
+id: job:8453:81876:66
+data: {"id":"81876","chainId":8453,"state":null,"ending":"Seller paid, deposit returned, premium to the backers.","seller":"0xccf57d593aa2cf8f8329e5e8353f69f2b21e34e9","buyer":"0x22cbc8b546978fd414fc02cbb91d0981cf94ae40","price":0,"updatedAt":1792169981,"addr":"T:1792171604/job:seller paid, deposit returned, premium to the backers./81876","kind":"seed","lane":"job","ts":1792171604506}
+
+event: job
+id: job:8453:81875:66
+data: {"id":"81875","chainId":8453,"state":null,"ending":"Seller paid, deposit returned, premium to the backers.","seller":"0xccf57d593aa2cf8f8329e5e8353f69f2b21e34e9","buyer":"0x22cbc8b546978fd414fc02cbb91d0981cf94ae40","price":0,"updatedAt":1792166373,"addr":"T:1792171604/job:seller paid, deposit returned, premium to the backers./81875","kind":"seed","lane":"job","ts":1792171604506}
+
+event: job
+id: job:8453:81874:66
+data: {"id":"81874","chainId":8453,"state":null,"ending":"Seller paid, deposit returned, premium to the backers.","seller":"0x4cdb0d2fd8755a7c3924b025cd953d665d023c2b","buyer":"0x22cbc8b546978fd414fc02cbb91d0981cf94ae40","price":0,"updatedAt":1792162781,"addr":"T:1792171604/job:seller paid, deposit returned, premium to the backers./81874","kind":"seed","lane":"job","ts":1792171604506}
+
+event: job
+id: job:8453:81873:66
+data: {"id":"81873","chainId":8453,"state":null,"ending":"Seller paid, deposit returned, premium to the backers.","seller":"0xccf57d593aa2cf8f8329e5e8353f69f2b21e34e9","buyer":"0x22cbc8b546978fd414fc02cbb91d0981cf94ae40","price":0,"updatedAt":1792159179,"addr":"T:1792171604/job:seller paid, deposit returned, premium to the backers./81873","kind":"seed","lane":"job","ts":1792171604506}
+
+event: job
+id: job:8453:81872:66
+data: {"id":"81872","chainId":8453,"state":null,"ending":"Seller paid, deposit returned, premium to the backers.","seller":"0x22cbc8b546978fd414fc02cbb91d0981cf94ae40","buyer":"0xa43ca6a0d013a53a326dcc34a8918b2ba143127f","price":0,"updatedAt":1792155573,"addr":"T:1792171604/job:seller paid, deposit returned, premium to the backers./81872","kind":"seed","lane":"job","ts":1792171604506}
+
+event: pool
+id: pool:0x4b33758d85678ea86cd875af8caf318462268ba8:56
+data: {"seller":"0x4b33758d85678ea86cd875af8caf318462268ba8","settled":2735,"cheated":5,"jobs":2887,"totalAssets":"0","vault":"0xD1e5f53d5d60580c2c3Cb985843Ff2d0C5B469B1","premium":{"low":0.0007796970114608734,"high":0.00426485786841298,"rate":0.0018248175182481751},"premium_label":"0.1%–0.4%","addr":"T:1792171608/pool:vault/0x4b33758d","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: pool
+id: pool:0x4e368c8d099d68a6b87aa616e3db4940e0721d60:11
+data: {"seller":"0x4e368c8d099d68a6b87aa616e3db4940e0721d60","settled":167,"cheated":0,"jobs":206,"totalAssets":null,"vault":null,"premium":{"low":0,"high":0.02248551872134217,"rate":0},"premium_label":"0.0%–2.2%","addr":"T:1792171608/pool:record/0x4e368c8d","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: pool
+id: pool:0x7eb002ddf5a0f78b427a7569e4bfde3ffb433078:12
+data: {"seller":"0x7eb002ddf5a0f78b427a7569e4bfde3ffb433078","settled":162,"cheated":30,"jobs":193,"totalAssets":null,"vault":null,"premium":{"low":0.11169509188314192,"high":0.21429032103775156,"rate":0.15625},"premium_label":"11.2%–21.4%","addr":"T:1792171608/pool:record/0x7eb002dd","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: pool
+id: pool:0x595e85dbf16abb8ed7daf34bb5be1e55bb557901:11
+data: {"seller":"0x595e85dbf16abb8ed7daf34bb5be1e55bb557901","settled":123,"cheated":1,"jobs":168,"totalAssets":null,"vault":null,"premium":{"low":0.0014250064581251712,"high":0.04426798605447707,"rate":0.008064516129032258},"premium_label":"0.1%–4.4%","addr":"T:1792171608/pool:record/0x595e85db","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: pool
+id: pool:0xc9e8b04cef1479661bbbe5080722567f910a7210:11
+data: {"seller":"0xc9e8b04cef1479661bbbe5080722567f910a7210","settled":112,"cheated":0,"jobs":175,"totalAssets":null,"vault":null,"premium":{"low":3.35439541744953e-18,"high":0.033161347066943875,"rate":0},"premium_label":"0.0%–3.3%","addr":"T:1792171608/pool:record/0xc9e8b04c","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: pool
+id: pool:0x7457b799121c9b8c51298d08f1c19f0186648c90:12
+data: {"seller":"0x7457b799121c9b8c51298d08f1c19f0186648c90","settled":110,"cheated":8,"jobs":6147,"totalAssets":null,"vault":null,"premium":{"low":0.034751175025165296,"high":0.12809535531631286,"rate":0.06779661016949153},"premium_label":"3.5%–12.8%","addr":"T:1792171608/pool:record/0x7457b799","kind":"seed","lane":"pool","ts":1792171608656}
+
+event: root
+id: root:1fd95d13df489b00
+data: {"root":"1fd95d13df489b0003dd26f014deea670af5cfc12dcc50a432d6b3c40e432c84","at":1792171602,"leaf_count":17274,"peak_count":69,"chains":69,"addr":"T:1792171611/superroot:agree/1fd95d13df","lane":"root","ts":1792171611232}
+
+: alive 1792171614299
+
+event: action
+id: action:0xa8a62ed3a904982bc555f24c55a6a12bc49d642feb08760dea1152fadf3d192d:T:1792171611/jev:decided/0x691fa8…5d23
+data: {"addr":"T:1792171611/jev:decided/0x691fa8…5d23","ts":1792171611000,"entity":"jev","action":"decided","chain_id":36927,"tx":"0xa8a62ed3a904982bc555f24c55a6a12bc49d642feb08760dea1152fadf3d192d","block":1909488,"label":"Jev decision log (every judge decision · immutable, append-only)","message":"Jev decision log (every judge decision · immutable, append-only): Decided(subject=0x691fa8…5d23 kind=0x08e1ec…08ee recorder=0x15d34A…6A65 index=0 digest=0x1e2231…9bf9 confidenceBps=0) · tx 0xa8a62e…192d","lane":"action"}
+
+event: action
+id: action:0x6999551d9f227265f9c32bc2ddba5c9231e6fbafa6fa9a68560b2ea9e0461272:T:1792171617/token:approval/0x699955…1272
+data: {"addr":"T:1792171617/token:approval/0x699955…1272","ts":1792171617000,"entity":"token","action":"approval","chain_id":36927,"tx":"0x6999551d9f227265f9c32bc2ddba5c9231e6fbafa6fa9a68560b2ea9e0461272","block":1909491,"label":"dUSDC (devnet test token)","message":"dUSDC (devnet test token): Approval(owner=0xd0820B…cFc7 spender=0x9DE1E2…c54d value=63906) · tx 0x699955…1272","lane":"action"}
+
+: alive 1792171629300
+
+event: action
+id: action:0x9837396acfbd41562614bc8c4e3479fca5cb9415a725ba806d1fbcc9f76fae67:T:1792171625/token:transfer/0x983739…ae67
+data: {"addr":"T:1792171625/token:transfer/0x983739…ae67","ts":1792171625000,"entity":"token","action":"transfer","chain_id":36927,"tx":"0x9837396acfbd41562614bc8c4e3479fca5cb9415a725ba806d1fbcc9f76fae67","block":1909495,"label":"dUSDC (devnet test token)","message":"dUSDC (devnet test token): Transfer(from=0xd0820B…cFc7 to=0x9DE1E2…c54d value=63906) · tx 0x983739…ae67","lane":"action"}
+
+event: root
+id: root:78765fa76f7bbf8a
+data: {"root":"78765fa76f7bbf8a0ad83d5285a7ff9810f2ecc3482c033fd97032787e43c10b","at":1792171622,"leaf_count":18497,"peak_count":69,"chains":69,"addr":"T:1792171632/superroot:agree/78765fa76f","lane":"root","ts":1792171632094}
+
