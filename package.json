@@ -1,6 +1,6 @@
 {
   "name": "@taifoon/term",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "The step renderer shared by `taifoon up` and `jev run`: \u2192 \u25cf \u23bf \u2713 ! \u2717 lines, elapsed ms, a spinner, NO_COLOR and non-TTY aware. Plus the live stream view (`@taifoon/term/stream`) shared by `taifoon stream` and `taifoon-sdk coord stream`. ESM, no dependencies, no import-time side effects.",
   "license": "MIT",
   "author": {
@@ -23,13 +23,19 @@
     "./stream": {
       "types": "./stream.d.ts",
       "import": "./stream.mjs"
+    },
+    "./measures": {
+      "types": "./measures.d.ts",
+      "import": "./measures.mjs"
     }
   },
   "files": [
     "term.mjs",
     "stream.mjs",
+    "measures.mjs",
     "index.d.ts",
     "stream.d.ts",
+    "measures.d.ts",
     "README.md"
   ],
   "sideEffects": false,
@@ -37,6 +43,6 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/term.test.mjs test/stream.test.mjs"
+    "test": "node --test test/term.test.mjs test/stream.test.mjs test/measures.test.mjs"
   }
 }

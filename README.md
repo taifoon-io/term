@@ -26,7 +26,7 @@ writes nothing, for `--json` runs.
 
 MIT.
 
-## The live stream view (`@taifoon/term/stream`, 0.2.0)
+## The live stream view (`@taifoon/term/stream`, 0.3.0) and its measures (`@taifoon/term/measures`)
 
 The view `taifoon stream` and `taifoon-sdk coord stream` share: one aligned row per event (time · kind · chain · protocol · summary ·
 energy), colour by kind and state, a status footer redrawn in place (live / reconnecting, events per second over 10 s, total, last seq,
@@ -40,4 +40,15 @@ v.event({ event: 'envelope', data: pipeEvent });   // a /v1/pipe/stream or /v1/s
 setInterval(() => v.tick(), 1000);                 // the footer and the heartbeat
 ```
 
-`describe(ev)` → the row's fields and `row()` / `footer()` → strings are pure, for tests.
+`describe(ev)` → the row's fields (ids, genome, components, latency, signature) and `row()` / `genomeLine()` / `footer()` /
+`statsPanel()` / `mastersTable()` → strings are pure, for tests.
+
+Since 0.3.0: ids are WHOLE by default (`short: true` is the opt-in); what a viewer sees is its key's entitlement (`ELISION_RULE`,
+`entitlementOf(GET /v1/access/key)`: a bought package opens whole ids and sealed bodies, a public or free viewer sees "…" and a buy
+hint); each row carries a genome line (entity · order key · digest · signature · producer→pipe latency · masters); `masters` (a
+Map from `mastersOf(GET /v1/owners records)`) adds the owner column (⚑ holder, ○ seat claimable · ● claimed · ◆ ours); `header(h)`
+rows for block headers; `stats: true` draws the measures panel (rates per chain and venue over 10 s / 1 min, GRID/s, p50/p95
+producer→pipe latency, lag per lane, signed and lost shares); the footer and the panel are redrawn in place without jitter,
+`resize(w)` follows the terminal. `@taifoon/term/measures` is the ring behind it: `spark()` is open-mamba's 8-bar sparkline
+(crates/mamba-cli/src/loopkit/studio.rs:26-35), the p50/p95 columns follow its histogram buckets (crates/mamba-lake/src/store.rs:447),
+and severity orders so the strictest wins (crates/mamba-policy/src/verdict.rs:7-11).

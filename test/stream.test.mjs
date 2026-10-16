@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { describe, row, footer, createStreamView, streamPalette, chainName, filtersOf, passes } from '../stream.mjs';
+import { describe, row, footer, createStreamView, streamPalette, chainName, filtersOf, passes, mastersOf, masterOf, genomeLine, statsPanel, mastersTable, entitlementOf, elided, ELISION_RULE } from '../stream.mjs';
 
 const strip = (s) => s.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '');
 const events = readFileSync(new URL('./fixtures/pipe-sample.sse', import.meta.url), 'utf8').split('\n\n').filter(Boolean).map((b) => ({
@@ -29,9 +29,13 @@ test('an observed bridge fill reads as protocol, transition, tx and block', () =
   const ev = events.find((e) => e.data.observed?.protocol === 'across_v3' && e.data.observed.tx);
   const r = describe(ev);
   assert.equal(r.kind, 'observe'); assert.equal(r.chain, chainName(ev.data.observed.chain_id)); assert.equal(r.where, 'across_v3');
-  assert.match(r.summary, new RegExp(`^order [A-Za-z]+ → ${ev.data.observed.to} · tx 0x[0-9a-f]{4}…[0-9a-f]{4} · block [0-9,]+$`));
+  assert.match(r.summary, new RegExp(`^order [A-Za-z]+ → ${ev.data.observed.to} · tx ${ev.data.observed.tx} · block [0-9,]+$`)); // WHOLE by default
   assert.equal(r.energy, '40 mGRID');
-  assert.match(describe(ev, { wide: true }).summary, new RegExp(ev.data.observed.tx));
+  assert.match(describe(ev, { short: true }).summary, /tx 0x[0-9a-f]{4}…[0-9a-f]{4} ·/); // --short is the opt-in
+  assert.deepEqual(Object.keys(r.ids).sort(), ['address', 'envelope', 'order_key', 'tx']);
+  assert.equal(r.genome.entity, 'order'); assert.equal(r.genome.key, ev.data.envelope.order_key); assert.equal(r.genome.digest, ev.data.envelope.payload_digest); assert.match(r.genome.stage, /→/);
+  assert.deepEqual(r.components, [`chain:${ev.data.observed.chain_id}`, 'protocol:across_v3']);
+  assert.equal(typeof r.latency, 'number');
   const sr = describe(events.find((e) => e.data.observed?.protocol === 'superroot'));
   assert.equal(sr.chain, 'taifoon');
 });
@@ -45,8 +49,7 @@ test('TTY: aligned coloured rows, the footer redrawn in place; NO_COLOR keeps th
   const lines = strip(o.buf).split('\n').map((l) => l.split('\r').pop()).filter((l) => /^\d\d:\d\d:\d\d/.test(l));
   assert.equal(lines.length, 10);
   assert.equal(new Set(lines.map((l) => l.slice(0, 20).length)).size, 1);
-  assert.ok(lines.every((l) => l.length <= 140 + 40));
-  assert.match(strip(o.buf), /● live · [0-9.]+\/s · 10 events · seq [0-9,]+ · public; session 120s$/);
+  assert.match(strip(o.buf), /● live +· +[0-9.]+\/s · [▁▂▃▄▅▆▇█·]+ · +10 events · seq [0-9,]+ · GRID [0-9.]+\/s · signed \d+% · lost \d+% · public; session 120s$/);
   const plain = sink(140); const pv = createStreamView({ out: plain, tty: true, color: false, now });
   pv.event(events[0]); assert.doesNotMatch(plain.buf, /\u001b\[[0-9;]*m/);
 });
@@ -59,23 +62,67 @@ test('off a TTY (or --json): one JSON object per line, nothing else', () => {
   for (const [i, l] of lines.entries()) { const j = JSON.parse(l); assert.equal(j.event, events[i].event); assert.equal(j.data.seq, events[i].data.seq); }
 });
 
-test('quiet stream: a heartbeat line after 10 s, the footer counts the quiet seconds', () => {
-  let t = 0; const o = sink(120); const v = createStreamView({ out: o, tty: true, color: false, now: () => t });
+test('quiet stream: the footer counts the quiet seconds; ONE heartbeat line after a quiet minute, at most every 5 minutes', () => {
+  let t = 0; const o = sink(120); const v = createStreamView({ out: o, tty: true, color: false, now: () => t, genome: false });
   v.state('live'); v.event(events[0]); t = 12_000; v.tick();
-  assert.match(o.buf, /connected — no new events for 12 s; the pipe is quiet, still listening/);
-  assert.match(o.buf, /quiet 12s/);
-  t = 20_000; const before = o.buf.length; v.tick();
-  assert.doesNotMatch(o.buf.slice(before), /still listening/); // at most one heartbeat per 30 s
+  assert.match(o.buf, /quiet 12s/); assert.doesNotMatch(o.buf, /still listening/);
+  t = 61_000; v.tick(); assert.match(o.buf, /connected, no new events for 61 s; still listening/);
+  t = 120_000; const before = o.buf.length; v.tick(); assert.doesNotMatch(o.buf.slice(before), /still listening/);
 });
 
+test('entitlement (_ELISION_RULE_v1_): public and free keys see elided ids and a buy hint; a paid key or a served payload sees whole ids', () => {
+  const pub = entitlementOf(null); assert.equal(pub.entitled, false); assert.equal(pub.via, 'public');
+  assert.equal(entitlementOf({ keys: [{ key: { prefix: 'tfr_free_x' }, tier: 'free' }] }).via, 'free key');
+  const paid = entitlementOf({ keys: [{ key: { prefix: 'tfr_x' }, tier: 'paid' }] }); assert.equal(paid.entitled, true);
+  const ev = events.find((e) => e.data.observed?.tx);
+  assert.equal(elided(ev, pub), true); assert.equal(elided(ev, paid), false);
+  assert.equal(elided({ event: 'envelope', data: { ...ev.data, envelope: { ...ev.data.envelope, payload: '{"x":1}' } } }, pub), false); // the pipe served it to this viewer
+  const o = sink(160); const v = createStreamView({ out: o, tty: true, color: false, entitlement: pub, now: () => 0 }); v.state('live'); v.event(ev);
+  assert.match(strip(o.buf), /tx 0x[0-9a-f]{4}…[0-9a-f]{4} · block/); assert.match(strip(o.buf), /buy access: the Taifoon package \(GET \/v1\/access\)/);
+  const o2 = sink(160); const v2 = createStreamView({ out: o2, tty: true, color: false, entitlement: paid, now: () => 0 }); v2.state('live'); v2.event(ev);
+  assert.match(strip(o2.buf), new RegExp(`tx ${ev.data.observed.tx} · block`)); assert.doesNotMatch(strip(o2.buf), /buy access/);
+  const nd = sink(); const v3 = createStreamView({ out: nd, tty: false, color: false, entitlement: pub }); v3.event(ev);
+  assert.equal(JSON.parse(nd.buf).elided, true); assert.match(JSON.parse(nd.buf).buy, /buy access/);
+  assert.match(ELISION_RULE, /^entitled:key_tier_in\(paid,plan\)/);
+});
+
+test('genome line: entity · key · digest · signature · producer→pipe latency · masters', () => {
+  const ev = events.find((e) => e.data.observed?.tx);
+  const masters = mastersOf([{ id: 'chain:8453', kind: 'chain', name: 'Base', owner: { persona: 'operator', holder: 'taifoon' }, seat: { state: 'held_by_operator', delegable: true }, shares: { owner_bps: 0, taifoon_bps: 10000 } }, { id: 'protocol:across_v3', kind: 'protocol', name: 'Across', owner: { persona: 'operator', holder: 'taifoon' } }]);
+  const r = describe(ev); const g = genomeLine(r, streamPalette(false), { masters });
+  assert.match(g, new RegExp(`⌁ order ${ev.data.envelope.order_key} · genome ${ev.data.envelope.payload_digest}`));
+  assert.match(g, /\d+ s producer → pipe/);
+  if (ev.data.observed.chain_id === 8453) assert.match(g, /chain:8453 → taifoon \(seat claimable\)/);
+  assert.equal(masterOf('venue:across_v3', masters).id, 'protocol:across_v3');
+  assert.equal(masterOf('chain:8453', masters).claimable, true);
+  const rowText = row(r, streamPalette(false), { width: 160, masters });
+  if (ev.data.observed.chain_id === 8453) assert.match(rowText, /⚑ taifoon/);
+});
+
+test('the stats panel and the masters table render from the measures and the components seen', () => {
+  let t = 0; const o = sink(160);
+  const masters = mastersOf([{ id: 'protocol:layerzero_v2', kind: 'protocol', name: 'LayerZero V2', owner: { persona: 'operator', holder: 'taifoon' }, seat: { state: 'held_by_operator', delegable: true }, shares: { owner_bps: 0, taifoon_bps: 10000 } }]);
+  const v = createStreamView({ out: o, tty: true, color: false, stats: true, masters, now: () => t, genome: false });
+  v.state('live'); for (const ev of events.slice(0, 30)) { t += 200; v.event(ev); }
+  const txt = strip(o.buf);
+  assert.match(txt, /measures +[0-9.]+\/s over 10 s · [0-9.]+\/s over 1 min · GRID [0-9.]+\/s/);
+  assert.match(txt, /chain +10 s +1 min +GRID\/s +p50 +p95/); assert.match(txt, /venue \/ protocol/);
+  const lines = statsPanel(v.measures.snapshot(), streamPalette(false), { width: 160 }); assert.ok(lines.length >= 3);
+  const comps = v.components(); assert.ok(comps.find((c) => c.component === 'protocol:layerzero_v2')?.master?.claimable);
+  const table = mastersTable(comps, streamPalette(false)); assert.match(table[0], /component +events +master +seat +shares/); assert.ok(table.some((l) => /protocol:layerzero_v2 .*taifoon .*held by operator · claimable.*owner 0% · taifoon 100%/.test(l)));
+  v.resize(100); v.header({ chain_id: 8453, network_name: 'Base', latest_block: 52690244, mini_mmr_root: '0xabc', last_header_age_secs: 3, rate_per_sec: 0.5, status: 'collecting' });
+  assert.match(strip(o.buf), /header +base +Base +— +height 52,690,244 · tree 0xabc · age 3 s · 0.50 blk\/s/); // no owner record for chain:8453 in this map: —
+});
+
+
 test('footer and row are pure', () => {
-  assert.equal(footer({ state: 'reconnecting', rate: 0, total: 3, seq: 9 }), '◌ reconnecting · 0.0/s · 3 events · seq 9');
+  assert.equal(footer({ state: 'reconnecting', rate: 0, total: 3, seq: 9 }), '◌ reconnecting  ·   0.0/s ·       3 events · seq 9');
   assert.match(row(describe(events[0]), streamPalette(false), { width: 100 }), /^\d\d:\d\d:\d\d  observe /);
 });
 
 test('names stay readable, hashes shorten; every chain the pipe observed has a name', () => {
   const ad = describe(events.find((e) => e.data.envelope?.kind === 'advert'));
-  assert.match(ad.summary, /to twigster-example/);
+  assert.match(ad.summary, /to twigster-example/); assert.deepEqual(ad.components, ['chain:offchain'].filter(() => false).concat(['venue:coord']));
   assert.equal(chainName(57073), 'ink'); assert.equal(chainName('eip155:59144'), 'linea');
   assert.match(describe({ event: 'batch', data: { kind: 'batch', seq: 1, at: 1, batch: { batch: 2, leaves: 1, root: '0x00' } } }).summary, /1 leaf ·/);
 });
@@ -101,6 +148,6 @@ test('every coord lane decodes to a named row: its lane as the kind, never a JSO
   }
   assert.deepEqual([...kinds].sort(), ['action', 'flow', 'hello', 'jev', 'job', 'pool', 'quota', 'root']);
   const pool = describe(lanes.find((e) => e.event === 'pool'));
-  assert.match(pool.summary, /^seller 0x[0-9a-f]{4}…[0-9a-f]{4} · [0-9,]+\/[0-9,]+ settled/);
+  assert.match(pool.summary, /^seller 0x[0-9a-f]{40} · [0-9,]+\/[0-9,]+ settled/);
   assert.match(pool.summary, /snapshot$/);
 });
