@@ -10,3 +10,6 @@ export function describe(ev: StreamEvent, opts?: { wide?: boolean }): StreamRow;
 export function row(r: StreamRow, p?: StreamPalette, opts?: { width?: number }): string;
 export function footer(s: StreamStatus, p?: StreamPalette): string;
 export function createStreamView(opts: { out: { write(s: string): unknown; columns?: number }; tty: boolean; color: boolean; wide?: boolean; json?: boolean; now?: () => number; width?: number }): StreamView;
+export interface StreamFilters { kind: string[]; chain: string[]; venue: string[]; protocol: string[]; actor: string[] }
+export function filtersOf(flags?: { kind?: string; kinds?: string; chain?: string; chains?: string; venue?: string; venues?: string; protocol?: string; actor?: string }): StreamFilters;
+export function passes(ev: StreamEvent, filters: StreamFilters): boolean;

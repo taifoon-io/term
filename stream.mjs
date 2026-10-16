@@ -101,6 +101,40 @@ export function describe(ev, { wide = false } = {}) {
   return row;
 }
 
+// _STREAM_FILTERS_v1_: the client-side filters of `taifoon stream` and `taifoon-sdk coord stream` (the pipe's own query filters match a
+// narrower shape, so both read every event and keep what passes). Pure.
+const list = (v) => (typeof v === 'string' && v ? v.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean) : []);
+
+/** The filters from the flags (each accepts a comma list). Pure. */
+export function filtersOf(f = {}) {
+  return {
+    kind: [...list(f.kind), ...list(f.kinds)],
+    chain: [...list(f.chain), ...list(f.chains)].map((c) => chainName(c).toLowerCase()),
+    venue: [...list(f.venue), ...list(f.venues)],
+    protocol: list(f.protocol),
+    actor: list(f.actor),
+  };
+}
+
+/** Does one event pass the filters? Pure; an empty filter passes everything. */
+export function passes(ev, F) {
+  const d = ev?.data && typeof ev.data === 'object' ? ev.data : {};
+  const env = d.envelope ?? {}; const ob = d.observed ?? {};
+  const kind = String(env.kind || d.kind || ev.event || '').toLowerCase();
+  if (F.kind.length && !F.kind.includes(kind) && !F.kind.includes(String(ev.event).toLowerCase())) return false;
+  const chain = chainName(ob.chain_id || env.from?.chain || env.to?.chain || d.chain_id || d.chainId || '').toLowerCase();
+  if (F.chain.length && !F.chain.includes(chain)) return false;
+  const venues = [env.from?.venue, env.to?.venue, ob.source, d.venue].filter(Boolean).map((s) => String(s).toLowerCase());
+  if (F.venue.length && !F.venue.some((v) => venues.includes(v))) return false;
+  const protocol = String(ob.protocol || d.leaf?.protocol || env.from?.venue || '').toLowerCase();
+  if (F.protocol.length && !F.protocol.some((p) => protocol.includes(p))) return false;
+  if (F.actor.length) {
+    const hay = [env.from?.agent, env.to?.agent, env.from?.address, env.to?.address, d.address, d.actor, d.client, d.provider, d.seller, d.buyer].filter(Boolean).join(' ').toLowerCase();
+    if (!F.actor.some((a) => hay.includes(a))) return false;
+  }
+  return true;
+}
+
 const pad = (s, n) => { const t = String(s); return t.length >= n ? `${t.slice(0, Math.max(0, n - 1))}…` : t + ' '.repeat(n - t.length); };
 const hhmmss = (ms) => { const d = new Date(ms); return [d.getHours(), d.getMinutes(), d.getSeconds()].map((x) => String(x).padStart(2, '0')).join(':'); };
 

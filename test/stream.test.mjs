@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { describe, row, footer, createStreamView, streamPalette, chainName } from '../stream.mjs';
+import { describe, row, footer, createStreamView, streamPalette, chainName, filtersOf, passes } from '../stream.mjs';
 
 const strip = (s) => s.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '');
 const events = readFileSync(new URL('./fixtures/pipe-sample.sse', import.meta.url), 'utf8').split('\n\n').filter(Boolean).map((b) => ({
@@ -78,4 +78,13 @@ test('names stay readable, hashes shorten; every chain the pipe observed has a n
   assert.match(ad.summary, /to twigster-example/);
   assert.equal(chainName(57073), 'ink'); assert.equal(chainName('eip155:59144'), 'linea');
   assert.match(describe({ event: 'batch', data: { kind: 'batch', seq: 1, at: 1, batch: { batch: 2, leaves: 1, root: '0x00' } } }).summary, /1 leaf ·/);
+});
+
+test('the one filter: chain by name or id, protocol, kind, actor; empty passes all', () => {
+  const keep = (f) => events.filter((e) => passes(e, filtersOf(f)));
+  assert.equal(keep({}).length, events.length);
+  assert.ok(keep({ chain: 'base', protocol: 'across_v3' }).every((e) => e.data.observed.chain_id === 8453 && e.data.observed.protocol === 'across_v3'));
+  assert.deepEqual(keep({ chain: 'eip155:8453' }).map((e) => e.data.seq), keep({ chain: 'base' }).map((e) => e.data.seq));
+  assert.ok(keep({ kind: 'lost' }).length > 0 && keep({ kind: 'lost' }).every((e) => e.data.kind === 'lost'));
+  assert.ok(keep({ actor: 'twigster-example' }).length > 0);
 });
