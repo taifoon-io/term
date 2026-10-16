@@ -22,8 +22,10 @@ export const PACKAGE_PRODUCT = { id: 'taifoon.package', name: 'the Taifoon packa
 export function entitlementOf(standing) {
   const keys = Array.isArray(standing?.keys) ? standing.keys : [];
   const bought = keys.find((k) => !k?.key?.revoked && !k?.key?.expired && (k?.tier === 'paid' || k?.tier === 'plan'));
-  if (bought) return { entitled: true, via: `key ${bought.tier}${bought.plan?.name ? ` (${bought.plan.name})` : ''}`, product: PACKAGE_PRODUCT };
-  return { entitled: false, via: keys.length ? 'free key' : 'public', product: PACKAGE_PRODUCT };
+  // the access ids the key bought one by one (access.cue #ResourceAccess grants, state active): those sales read whole without the package
+  const access = (Array.isArray(standing?.grants) ? standing.grants : []).filter((g) => g?.state === 'active' && typeof g.resource === 'string').map((g) => g.resource);
+  if (bought) return { entitled: true, via: `key ${bought.tier}${bought.plan?.name ? ` (${bought.plan.name})` : ''}`, product: PACKAGE_PRODUCT, access };
+  return { entitled: false, via: keys.length ? 'free key' : 'public', product: PACKAGE_PRODUCT, access };
 }
 /** Did the pipe serve this event's payload to the viewer? Pure. */
 export const payloadServed = (ev) => { const e = ev?.data?.envelope; return !!(e && typeof e.payload === 'string' && e.payload.length); };
@@ -69,12 +71,115 @@ const gridOf = (e) => { const mg = e?.economics?.energy?.milli_grid; return type
 const valueOf = (e) => { const v = e?.economics?.value; if (!v || v.amount == null) return ''; return `${v.amount} ${v.asset ?? ''}`.trim(); };
 const join = (...xs) => xs.filter((x) => x !== '' && x != null && x !== false).join(' · ');
 
+// ── the commerce agreement (_ONE_FORMAT_v1_, coord lang/cue/commerce.cue #Agreement, taifoon.commerce.agreement.v1) ─────────────
+// Every commerce envelope carries `envelope.agreement`: feature (the venue or our line) · hop (one of the twelve) · ref (the sale) ·
+// parties · payment · legs (Σ = payment from hop `legs` on) · volume? · delivered · vault? · evidence {chain, tx} · access?. The row
+// reads it in the protocol's own order — the venue in the venue column, then: job/sale · hop · paid · seller → buyer · via reseller ·
+// delivered · tx — and a dim ⚖ line under it with the legs, the vault move and the energy. A viewer that did not buy the access sees
+// party ids, the ref and the tx as "…" (the same view as agreementView of packages/resale/runtime/coord-lang/agreement.mjs; the test
+// runs both on lang/vectors/agreement.json); amounts, legs, hop and feature stay public. An event without one keeps today's text.
+export const AGREEMENT_SCHEMA = 'taifoon.commerce.agreement.v1';
+export const ELISION_MARKER = '…';
+const DECIMALS = { USDC: 6, USDT: 6, USDG: 6, EURC: 6, GLMR: 18, MOVR: 18, ETH: 18, WETH: 18, MON: 18, SOL: 9, GRID: 0 };
+/** base units of an asset as an amount: ("1250000", "USDC") → "1.25 USDC"; ("2500", "USDC") → "0.0025 USDC". Pure. */
+export function amount(units, asset) {
+  if (units == null || units === '') return '';
+  let b; try { b = BigInt(String(units)); } catch { return `${units} ${asset ?? ''}`.trim(); }
+  const dec = DECIMALS[String(asset ?? '').toUpperCase()];
+  if (dec == null) return `${b.toLocaleString('en-US')} ${asset ?? 'units'}`.trim();
+  const v = Number(b) / 10 ** dec;
+  const text = v === 0 ? '0' : Number.isInteger(v) ? v.toLocaleString('en-US') : v >= 1 ? v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(Number(v.toPrecision(2)));
+  return `${text} ${asset}`;
+}
+const HOP_WORD = { offer_in: 'offered', classify: 'classified', listed: 'listed', hired: 'hired', delivered: 'delivered', graded: 'graded', settled: 'settled', legs: 'legs written', accrued: 'accrued', split: 'split', paid: 'paid', recorded: 'recorded' };
+const LEG_WORD = { seller_share: 'seller', our_fee: 'our fee', venue_fee: 'venue fee', reseller_markup: 'reseller', provider: 'provider', graders: 'graders', ecosystem: 'ecosystem', premium: 'premium', settler_cost: 'settler', protocol_share: 'protocol', refund: 'refund', loss: 'loss' };
+const isUnknownV = (o) => !!(o && typeof o === 'object' && o.unknown === true);
+/** the agreement an event carries (envelope.agreement; a coord-stream lane may carry it at data.agreement). Pure. */
+export function agreementOf(d) {
+  const a = d?.envelope?.agreement ?? d?.agreement ?? null;
+  return a && typeof a === 'object' && a.schema === AGREEMENT_SCHEMA ? a : null;
+}
+/** the agreement as a viewer without the right sees it — party ids, the ref and the tx as the marker. Pure; mirrors agreementView. */
+export function agreementElided(a) {
+  const out = JSON.parse(JSON.stringify(a));
+  for (const [k, p] of Object.entries(out.parties || {})) if (p && typeof p === 'object' && !isUnknownV(p)) out.parties[k] = { ...p, id: ELISION_MARKER, elided: true };
+  if (out.evidence && typeof out.evidence === 'object' && !isUnknownV(out.evidence)) out.evidence = { ...out.evidence, tx: ELISION_MARKER };
+  if (typeof out.ref === 'string') out.ref = ELISION_MARKER;
+  return out;
+}
+const partyText = (p, sh) => (!p ? '' : isUnknownV(p) ? '?' : p.id === ELISION_MARKER ? (p.name ? `${p.name} …` : ELISION_MARKER) : p.name ? `${p.name} ${short(p.id, sh)}` : short(p.id, sh));
+/** the sale's name on the line: `job 81877` for a job lane, else the ref (`sale:8453:0x…` → `sale 0x…`). Pure. */
+function saleName(a, jobId, sh) {
+  if (jobId != null && jobId !== '') return `job ${jobId}`;
+  const r = String(a.ref ?? '');
+  if (r === ELISION_MARKER) return `sale ${ELISION_MARKER}`;
+  const m = /^(job|sale|usage|bridge|grant|match|hire)[:/].*?([^:/]+)$/.exec(r);
+  return m ? `${m[1]} ${short(m[2], sh)}` : short(r, sh);
+}
+/** the compact line: [venue ·] job · hop · paid amount (· volume) · seller → buyer · via reseller · delivered · tx. Pure. */
+export function agreementLine(a, { jobId = null, venue = false, short: sh = false } = {}) {
+  const ps = a.parties ?? {};
+  const money = isUnknownV(a.payment) ? '?' : a.payment ? amount(a.payment.units, a.payment.asset) : '';
+  // the hop and the money read as one phrase: "paid 3.02 USDC", "hired for 3.02 USDC", "offered at 0.0065 USDC"
+  const PREP = { offer_in: 'at', classify: 'at', listed: 'at', hired: 'for', delivered: 'for', graded: 'for' };
+  const step = money ? `${HOP_WORD[a.hop] ?? a.hop} ${PREP[a.hop] ?? ''} ${money}`.replace(/\s+/g, ' ') : (HOP_WORD[a.hop] ?? a.hop);
+  const vol = a.volume ? `${BigInt(a.volume.count).toLocaleString('en-US')} ${a.volume.unit}` : '';
+  const seller = partyText(ps.seller, sh); const buyer = partyText(ps.buyer, sh);
+  const who = seller || buyer ? `${seller || '?'} → ${buyer || '?'}` : '';
+  const ev = a.evidence && !isUnknownV(a.evidence) ? `tx ${short(a.evidence.tx, sh)}${a.evidence.chain ? ` on ${chainName(a.evidence.chain)}` : ''}` : '';
+  return join(venue ? a.feature : '', saleName(a, jobId, sh), step, vol, who, ps.reseller ? `via ${partyText(ps.reseller, sh)}` : '', ev);
+}
+/** the ⚖ line: every leg with its party, the vault move, what was delivered, the unknowns with their reasons, the energy. Pure. */
+export function legsLine(a, { energy = null, short: sh = false } = {}) {
+  const asset = a.payment && !isUnknownV(a.payment) ? a.payment.asset : null;
+  const parts = (Array.isArray(a.legs) ? a.legs : []).map((l) => {
+    const name = LEG_WORD[l.leg] ?? String(l.leg).replace(/_/g, ' ');
+    const qual = [l.side, l.part].filter(Boolean).join(' ');
+    const to = l.to && LEG_WORD[l.leg] !== l.to ? ` → ${l.to === 'assurer' ? 'backers' : l.to}` : '';
+    return `${name}${qual ? ` ${qual}` : ''} ${amount(l.units, asset).replace(/ \S+$/, '')}${to}`;
+  });
+  if (a.vault) parts.push(`vault ${a.vault.move} ${amount(a.vault.units, a.vault.asset)}${a.vault.what ? ` (${a.vault.what})` : ''}`);
+  if (a.delivered && !isUnknownV(a.delivered)) parts.push(`delivered ${a.delivered.what}`);
+  for (const [k, v] of [['payment', a.payment], ['delivered', a.delivered], ['evidence', a.evidence]]) if (isUnknownV(v)) parts.push(`${k} unknown: ${v.reason}`);
+  for (const k of ['assurer', 'evaluator', 'settler']) if (a.parties?.[k] && !isUnknownV(a.parties[k])) parts.push(`${k} ${partyText(a.parties[k], sh)}`);
+  if (typeof energy === 'number') parts.push(`energy ${energy} mGRID`);
+  return parts.join(' · ');
+}
+/** the inline line of an agreement check: ✗ refused (red, with the checker's reason) · ○ missing (yellow); nothing when ok. Pure. */
+export function checkLine(c, p = streamPalette(false)) {
+  if (!c || c.state === 'ok') return '';
+  return `${' '.repeat(10)}${c.state === 'invalid' ? p.red(`✗ agreement refused: ${c.reason}`) : p.yellow(`○ no agreement: ${c.reason}`)}`;
+}
+const SETTLED = new Set(['settled', 'legs', 'accrued', 'split', 'paid', 'recorded']);
+/** the agreement over a described row: the venue column, the line, the ⚖ legs, the tone. Mutates and returns the row. */
+function withAgreement(row, a, d, { elide, cut }) {
+  const v = elide ? agreementElided(a) : a;
+  row.agreement = v;
+  row.where = v.feature;
+  const jobId = d.envelope ? null : (d.id ?? null);
+  const state = d.envelope?.state && !['acked', 'included'].includes(d.envelope.state) ? d.envelope.state : '';
+  row.summary = join(agreementLine(v, { jobId, short: cut }), state);
+  row.legs = legsLine(v, { energy: typeof d.envelope?.economics?.energy?.milli_grid === 'number' ? d.envelope.economics.energy.milli_grid : null, short: cut });
+  row.tone = (v.legs || []).some((l) => l.leg === 'refund' || l.leg === 'loss') ? 'warn' : SETTLED.has(v.hop) ? 'good' : 'info';
+  if (v.evidence && !isUnknownV(v.evidence) && v.evidence.tx !== ELISION_MARKER) row.ids.tx = v.evidence.tx;
+  if (v.ref !== ELISION_MARKER) row.ids.sale = v.ref;
+  if (row.genome) row.genome.stage = v.hop; else row.genome = { entity: 'agreement', key: v.ref, digest: null, stage: v.hop, transition: null, catalogue: null, producer_leaf: null };
+  if (!row.components.includes(`venue:${v.feature}`)) row.components.push(`venue:${v.feature}`);
+  return row;
+}
+
 /**
  * One event → the row { at, kind, chain, where, summary, energy, value, state, tone, seq, ids, genome, components, latency, signed }.
  * Accepts the pipe stream's events (`/v1/pipe/stream`: event = kind, data = taifoon.pipe.event.v1) and the coord stream's lanes
  * (`/v1/stream`: job, action, flow, root, jev, pool, quota, hello). `short` cuts hashes; by default every id is whole. Pure.
  */
-export function describe(ev, { short: sh = false, wide = false, elide = false } = {}) {
+export function describe(ev, opts = {}) {
+  const row = describeBase(ev, opts);
+  const d = ev?.data && typeof ev.data === 'object' ? ev.data : {};
+  const a = agreementOf(d);
+  return a ? withAgreement(row, a, d, { elide: !!opts.elide, cut: (!!opts.short || !!opts.elide) && !opts.wide }) : row;
+}
+function describeBase(ev, { short: sh = false, wide = false, elide = false } = {}) {
   const cut = (sh || elide) && !wide;
   const d = ev?.data && typeof ev.data === 'object' ? ev.data : {};
   const atMs = typeof d.at === 'number' ? (d.at > 1e12 ? d.at : d.at * 1000) : typeof d.ts === 'number' ? d.ts : Date.now();
@@ -333,10 +438,10 @@ export function statsPanel(snap, p = streamPalette(false), { width = 120, rows =
 /**
  * The live view. `out` is the stream rows go to; `tty` decides between the aligned, coloured view (rows, genome lines, a footer and
  * an optional stats panel redrawn in place) and plain NDJSON. Options: short (cut hashes; whole by default), genome (the genome line,
- * on by default), masters (a Map from mastersOf: the master column and the masters on the genome line), stats (the panel), width.
+ * on by default), legs (the ⚖ line of a commerce agreement under its row, on by default), masters (a Map from mastersOf: the master column and the masters on the genome line), stats (the panel), width.
  * Returns { event(ev), header(h), state(s, viewer?), tick(), resize(w), close(), total, seq, measures, components }.
  */
-export function createStreamView({ out, tty, color, short: sh = false, wide = false, genome = true, masters = null, stats = false, json = false, now = () => Date.now(), width, entitlement = null, opened = null } = {}) {
+export function createStreamView({ out, tty, color, short: sh = false, wide = false, genome = true, legs = true, masters = null, stats = false, json = false, now = () => Date.now(), width, entitlement = null, opened = null, check = null } = {}) {
   const p = streamPalette(!!(tty && color));
   let W = width ?? (out && out.columns) ?? 120;
   const live = tty && !json;
@@ -362,14 +467,21 @@ export function createStreamView({ out, tty, color, short: sh = false, wide = fa
       const d = ev?.data && typeof ev.data === 'object' ? ev.data : {};
       if (typeof d.seq === 'number') seq = d.seq;
       if (d.lag && typeof d.lag.behind === 'number') { lag = d.lag.behind; m.lag(String(d.lane ?? 'pipe'), d.lag.behind); }
-      const el = entitlement ? elided(ev, entitlement) : false;
-      const r = describe(ev, { short: shorten || el, wide: wide && !el });
+      const ag = agreementOf(ev?.data);
+      // a key entitled to this sale's access id (access.cue grants, GET /v1/access/grants) sees it whole even without the package
+      const el = entitlement ? elided(ev, entitlement) && !(ag?.access && Array.isArray(entitlement.access) && entitlement.access.includes(ag.access)) : false;
+      const r = describe(ev, { short: shorten || el, elide: el, wide: wide && !el });
       if (opened && !el) { const o = opened(ev); if (o) r.opened = o; }
+      // the envelope's shape on every hit (_AGREEMENT_CHECK_v1_): check(ev) → { state: ok | invalid | missing, reason } from the generated
+      // agreement checker the caller vendors (one rule); a refused or missing agreement is drawn inline so the patch is obvious
+      if (check) { const c = check(ev); if (c) r.check = c; }
       sample(r);
-      if (!live) { out.write(`${JSON.stringify({ event: ev.event, ...(ev.id ? { id: ev.id } : {}), data: ev.data, ...(genome && r.genome ? { genome: r.genome } : {}), ...(masters ? { masters: r.components.map((c) => masterOf(c, masters)).filter(Boolean) } : {}), ...(el ? { elided: true, buy: buyHint(entitlement) } : {}), ...(r.opened ? { opened: r.opened } : {}) })}\n`); return; }
+      if (!live) { out.write(`${JSON.stringify({ event: ev.event, ...(ev.id ? { id: ev.id } : {}), data: ev.data, ...(genome && r.genome ? { genome: r.genome } : {}), ...(masters ? { masters: r.components.map((c) => masterOf(c, masters)).filter(Boolean) } : {}), ...(el ? { elided: true, buy: buyHint(entitlement) } : {}), ...(r.opened ? { opened: r.opened } : {}), ...(r.agreement ? { agreement: r.agreement } : {}), ...(r.check ? { agreement_check: r.check } : {}) })}\n`); return; }
       eraseDrawn();
       const g = genome ? genomeLine(r, p, { masters, short: shorten || el, hint: el ? buyHint(entitlement) : '' }) : '';
-      out.write(`${row(r, p, { width: W, masters, short: shorten })}\n${g ? `${g}\n` : ''}`); draw();
+      const lg = legs && r.legs ? `${' '.repeat(10)}${p.dim(`⚖ ${r.legs}`)}` : '';
+      const ck = checkLine(r.check, p);
+      out.write(`${row(r, p, { width: W, masters, short: shorten })}\n${lg ? `${lg}\n` : ''}${ck ? `${ck}\n` : ''}${g ? `${g}\n` : ''}`); draw();
     },
     /** a block header as collected (from GET /v1/root/chains or a producer): { chain_id, network_name, latest_block, hash?, mini_mmr_root, last_header_age_secs, rate_per_sec, status } */
     header(h) {

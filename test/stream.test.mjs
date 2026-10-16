@@ -151,3 +151,89 @@ test('every coord lane decodes to a named row: its lane as the kind, never a JSO
   assert.match(pool.summary, /^seller 0x[0-9a-f]{40} · [0-9,]+\/[0-9,]+ settled/);
   assert.match(pool.summary, /snapshot$/);
 });
+
+// ── the commerce agreement (_ONE_FORMAT_v1_, coord lang/cue/commerce.cue #Agreement) ──
+import { amount, agreementOf, agreementElided, agreementLine, legsLine } from '../stream.mjs';
+// the generated checker and its vectors live in the monorepo (packages/resale, from coord lang/vectors/agreement.json); the public
+// term repo ships without them, so the parity cases run here and a fixture copy of one vector keeps the rendering tests everywhere
+const { existsSync } = await import('node:fs');
+const MONO = existsSync(new URL('../../resale/runtime/coord-lang/agreement.json', import.meta.url));
+const VECTORS = MONO ? JSON.parse(readFileSync(new URL('../../resale/runtime/coord-lang/agreement.json', import.meta.url), 'utf8')) : { cases: [] };
+const { agreementView, agreementError } = MONO ? await import('../../resale/runtime/coord-lang/agreement.mjs') : { agreementView: null, agreementError: () => null };
+const okCases = VECTORS.cases.filter((c) => c.ok);
+const PAID = { schema: 'taifoon.commerce.agreement.v1', feature: 'erc8183-base', hop: 'paid', ref: 'job:8453:erc8183:81877',
+  parties: { seller: { id: '0x1111111111111111111111111111111111111111' }, buyer: { id: '0x2222222222222222222222222222222222222222' }, assurer: { id: 'pool:8453:assurance:1' }, evaluator: { id: 'jev:0x5242dE388a846d16641744dEB095eD63990E7be8' } },
+  payment: { units: '3024690', asset: 'USDC' },
+  legs: [{ leg: 'our_fee', units: '500000', to: 'layer' }, { leg: 'venue_fee', units: '302468', side: 'in', to: 'venue' }, { leg: 'seller_share', units: '2000000', to: 'seller' }, { leg: 'premium', units: '222222', to: 'assurer' }],
+  delivered: { what: 'the job deliverable, graded complete', ref: 'deliverable:0xabc' }, vault: { move: 'release', units: '100000', asset: 'USDC', what: "the seller's deposit returned" },
+  evidence: { chain: 'eip155:8453', tx: '0x81464f5e6a8b6322e4bec8f609a08e8ec1f1ef11d39e5f5d51e3fa676c5f042a' } };
+const paid = MONO ? okCases.find((c) => c.name === 'erc8183-paid-assured').agreement : PAID;
+
+test('the elided agreement is the generated view on every accepted vector (one rule, not two)', { skip: !MONO && 'the vectors live in the monorepo' }, () => {
+  assert.deepEqual(paid, PAID, 'the fixture copy is the coord vector erc8183-paid-assured');
+  assert.ok(okCases.length >= 5);
+  for (const c of okCases) {
+    assert.equal(agreementError(c.agreement), null, c.name);
+    assert.deepEqual(agreementElided(c.agreement), agreementView(c.agreement, false), c.name);
+    assert.deepEqual(agreementElided(c.agreement), c.view, c.name);
+  }
+});
+
+test('amount reads base units exactly', () => {
+  assert.equal(amount('1250000', 'USDC'), '1.25 USDC'); assert.equal(amount('2500', 'USDC'), '0.0025 USDC');
+  assert.equal(amount('5', 'GRID'), '5 GRID'); assert.equal(amount('7', 'ZZZ'), '7 ZZZ'); assert.equal(amount('0', 'USDC'), '0 USDC');
+  assert.equal(amount('2000000', 'USDC'), '2 USDC'); assert.equal(amount('1270000', 'USDC'), '1.27 USDC');
+});
+
+test('an erc8183 job with its agreement: venue column, then job · hop · paid · seller → buyer · tx; the ⚖ line has every leg', () => {
+  const ev = { event: 'job', data: { id: '81877', chainId: 8453, venue: 'erc8183', ending: 'Seller paid, deposit returned, premium to the backers.', lane: 'job', ts: 1, agreement: paid } };
+  const r = describe(ev);
+  assert.equal(r.where, 'erc8183-base');
+  assert.equal(r.summary, 'job 81877 · paid 3.02 USDC · 0x1111111111111111111111111111111111111111 → 0x2222222222222222222222222222222222222222 · tx 0x81464f5e6a8b6322e4bec8f609a08e8ec1f1ef11d39e5f5d51e3fa676c5f042a on base');
+  assert.equal(r.legs, 'our fee 0.5 → layer · venue fee in 0.3 → venue · seller 2 · premium 0.22 → backers · vault release 0.1 USDC (the seller\'s deposit returned) · delivered the job deliverable, graded complete · assurer pool:8453:assurance:1 · evaluator jev:0x5242dE388a846d16641744dEB095eD63990E7be8');
+  assert.equal(r.tone, 'good'); assert.equal(r.ids.tx, paid.evidence.tx);
+  const e = describe(ev, { elide: true });
+  assert.equal(e.summary, 'job 81877 · paid 3.02 USDC · … → … · tx … on base');
+  assert.match(e.legs, /our fee 0\.5 → layer/); assert.equal(e.ids.tx, undefined);
+});
+
+test('without an agreement the row keeps today\'s text', () => {
+  const plain = describe({ event: 'job', data: { id: '81877', chainId: 8453, ending: 'Seller paid, deposit returned, premium to the backers.', seller: '0x' + 'a'.repeat(40), lane: 'job', ts: 1 } });
+  assert.match(plain.summary, /^job 81877 · Seller paid, deposit returned, premium to the backers\./); assert.equal(plain.legs, undefined); assert.equal(plain.agreement, undefined);
+});
+
+test('an envelope carrying the agreement (pipe stream) reads the same way; unknowns say why', () => {
+  const unk = okCases.find((c) => c.agreement.payment?.unknown) ?? okCases.find((c) => c.agreement.evidence?.unknown);
+  const ev = { event: 'envelope', data: { envelope: { id: '0x' + '9'.repeat(64), kind: 'record', state: 'included', from: { venue: 'x' }, to: { venue: 'y', chain: 'eip155:8453' }, economics: { energy: { milli_grid: 12 } }, agreement: paid } } };
+  const r = describe(ev);
+  assert.equal(r.where, 'erc8183-base'); assert.match(r.summary, /^job 81877 · paid 3\.02 USDC/); assert.match(r.legs, /energy 12 mGRID$/);
+  if (unk) { const u = describe({ event: 'job', data: { id: 1, lane: 'job', ts: 1, agreement: unk.agreement } }); assert.match(u.legs, /unknown: /); }
+});
+
+test('the view: ⚖ line under the row on a TTY, off with legs:false, the agreement in NDJSON; a grant for the access id opens it', () => {
+  const ev = { event: 'job', data: { id: '81877', chainId: 8453, lane: 'job', ts: 1, agreement: { ...paid, access: 'venue:erc8183-base' } } };
+  const o = sink(240); const v = createStreamView({ out: o, tty: true, color: false, now: () => 0, genome: false }); v.state('live'); v.event(ev);
+  assert.match(strip(o.buf), /\n {10}⚖ our fee 0\.5 → layer/);
+  const o2 = sink(240); const v2 = createStreamView({ out: o2, tty: true, color: false, now: () => 0, genome: false, legs: false }); v2.state('live'); v2.event(ev);
+  assert.doesNotMatch(strip(o2.buf), /⚖/);
+  const nd = sink(); const v3 = createStreamView({ out: nd, tty: false, color: false }); v3.event(ev); assert.equal(JSON.parse(nd.buf).agreement.payment.units, '3024690');
+  const pub = entitlementOf(null);
+  const o4 = sink(240); const v4 = createStreamView({ out: o4, tty: true, color: false, now: () => 0, genome: false, entitlement: pub }); v4.state('live'); v4.event(ev);
+  assert.match(strip(o4.buf), /… → …/);
+  const granted = entitlementOf({ keys: [{ tier: 'free', key: {} }], grants: [{ state: 'active', resource: 'venue:erc8183-base' }] });
+  const o5 = sink(240); const v5 = createStreamView({ out: o5, tty: true, color: false, now: () => 0, genome: false, entitlement: granted }); v5.state('live'); v5.event(ev);
+  assert.match(strip(o5.buf), /0x1111111111111111111111111111111111111111 → 0x2222/);
+});
+
+test('the agreement check is drawn inline: ✗ refused with the reason, ○ missing, nothing when ok; NDJSON carries it', { skip: !MONO && 'the checker lives in the monorepo' }, () => {
+  const ev = { event: 'job', data: { id: '1', chainId: 8453, lane: 'job', ts: 1, agreement: paid } };
+  const bad = { event: 'job', data: { id: '2', chainId: 8453, lane: 'job', ts: 1, agreement: { ...paid, hop: 'shipped' } } };
+  const none = { event: 'job', data: { id: '3', chainId: 8453, lane: 'job', ts: 1, venue: 'erc8183' } };
+  const check = (e) => { const a = e.data.agreement; if (!a) return { state: 'missing', reason: 'the erc8183 lane carries envelope.agreement' }; const r = agreementError(a); return r ? { state: 'invalid', reason: r } : { state: 'ok' }; };
+  const o = sink(240); const v = createStreamView({ out: o, tty: true, color: false, now: () => 0, genome: false, check }); v.state('live'); v.event(ev); v.event(bad); v.event(none);
+  const t = strip(o.buf);
+  assert.match(t, /✗ agreement refused: hop "shipped" is not one of the twelve/);
+  assert.match(t, /○ no agreement: the erc8183 lane carries envelope\.agreement/);
+  assert.equal((t.match(/✗|○ no agreement/g) || []).length, 2);
+  const nd = sink(); const v2 = createStreamView({ out: nd, tty: false, color: false, check }); v2.event(bad); assert.equal(JSON.parse(nd.buf).agreement_check.state, 'invalid');
+});

@@ -52,3 +52,12 @@ producer→pipe latency, lag per lane, signed and lost shares); the footer and t
 `resize(w)` follows the terminal. `@taifoon/term/measures` is the ring behind it: `spark()` is open-mamba's 8-bar sparkline
 (crates/mamba-cli/src/loopkit/studio.rs:26-35), the p50/p95 columns follow its histogram buckets (crates/mamba-lake/src/store.rs:447),
 and severity orders so the strictest wins (crates/mamba-policy/src/verdict.rs:7-11).
+
+## The commerce agreement (`@taifoon/term/stream`, 0.3.1)
+
+A commerce envelope carries `envelope.agreement` (`taifoon.commerce.agreement.v1`, coord `lang/cue/commerce.cue #Agreement`).
+The view reads it in the protocol's order: the venue in the venue column, then `job 81877 · paid 3.02 USDC · seller → buyer ·
+via reseller · tx … on base`, and a dim `⚖` line with every leg, the vault move and the energy (`legs: false` hides it). A viewer
+without the right sees party ids, the ref and the tx as `…` — the generated `agreementView`, run on the coord vectors in the tests;
+an access id the key bought (`grants`) opens that agreement whole. `check(ev)` draws a refused (`✗`) or missing (`○`) agreement inline.
+Pure helpers: `amount`, `agreementOf`, `agreementElided`, `agreementLine`, `legsLine`, `checkLine`.
