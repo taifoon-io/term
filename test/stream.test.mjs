@@ -72,3 +72,10 @@ test('footer and row are pure', () => {
   assert.equal(footer({ state: 'reconnecting', rate: 0, total: 3, seq: 9 }), '◌ reconnecting · 0.0/s · 3 events · seq 9');
   assert.match(row(describe(events[0]), streamPalette(false), { width: 100 }), /^\d\d:\d\d:\d\d  observe /);
 });
+
+test('names stay readable, hashes shorten; every chain the pipe observed has a name', () => {
+  const ad = describe(events.find((e) => e.data.envelope?.kind === 'advert'));
+  assert.match(ad.summary, /to twigster-example/);
+  assert.equal(chainName(57073), 'ink'); assert.equal(chainName('eip155:59144'), 'linea');
+  assert.match(describe({ event: 'batch', data: { kind: 'batch', seq: 1, at: 1, batch: { batch: 2, leaves: 1, root: '0x00' } } }).summary, /1 leaf ·/);
+});

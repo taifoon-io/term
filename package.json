@@ -1,6 +1,6 @@
 {
   "name": "@taifoon/term",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The step renderer shared by `taifoon up` and `jev run`: \u2192 \u25cf \u23bf \u2713 ! \u2717 lines, elapsed ms, a spinner, NO_COLOR and non-TTY aware. Plus the live stream view (`@taifoon/term/stream`) shared by `taifoon stream` and `taifoon-sdk coord stream`. ESM, no dependencies, no import-time side effects.",
   "license": "MIT",
   "author": {

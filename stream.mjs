@@ -16,7 +16,7 @@ export function streamPalette(on) {
   return { on: true, bold: ESC(1, 22), dim: ESC(2, 22), green: ESC(32, 39), yellow: ESC(33, 39), red: ESC(31, 39), cyan: ESC(36, 39), magenta: ESC(35, 39), blue: ESC(34, 39), gray: ESC(90, 39) };
 }
 
-const CHAINS = { 0: 'taifoon', taifoon: 'taifoon', offchain: 'offchain', 1: 'ethereum', 10: 'op', 56: 'bnb', 100: 'gnosis', 130: 'unichain', 137: 'polygon', 143: 'monad', 4663: 'robinhood', 5042: 'arc', 8453: 'base', 36927: 'taifoon-dev', 42161: 'arbitrum', 42170: 'arb-nova', 42220: 'celo', 43114: 'avalanche', 421614: 'arb-sepolia', 3692781: 'taifoon' };
+const CHAINS = { 0: 'taifoon', taifoon: 'taifoon', offchain: 'offchain', 25: 'cronos', 146: 'sonic', 250: 'fantom', 252: 'fraxtal', 324: 'zksync', 480: 'worldchain', 1088: 'metis', 1135: 'lisk', 1284: 'moonbeam', 1285: 'moonriver', 1329: 'sei', 2741: 'abstract', 5000: 'mantle', 8217: 'kaia', 34443: 'mode', 57073: 'ink', 59144: 'linea', 60808: 'bob', 80094: 'berachain', 81457: 'blast', 167000: 'taiko', 534352: 'scroll', 7777777: 'zora', 999: 'hyperevm', 1868: 'soneium', 11155111: 'sepolia', 84532: 'base-sepolia', 1: 'ethereum', 10: 'op', 56: 'bnb', 100: 'gnosis', 130: 'unichain', 137: 'polygon', 143: 'monad', 4663: 'robinhood', 5042: 'arc', 8453: 'base', 36927: 'taifoon-dev', 42161: 'arbitrum', 42170: 'arb-nova', 42220: 'celo', 43114: 'avalanche', 421614: 'arb-sepolia', 3692781: 'taifoon' };
 
 /** A chain id or `eip155:<id>` / `solana:…` as a short name. Pure. */
 export function chainName(c) {
@@ -32,7 +32,8 @@ export function chainName(c) {
 export function short(h, wide = false) {
   const s = String(h ?? '');
   if (wide || s.length <= 14) return s;
-  return s.startsWith('0x') ? `${s.slice(0, 6)}…${s.slice(-4)}` : `${s.slice(0, 6)}…${s.slice(-4)}`;
+  if (/^0x[0-9a-fA-F]+$/.test(s)) return `${s.slice(0, 6)}…${s.slice(-4)}`;  // a hash or an address
+  return s.length > 28 ? `${s.slice(0, 27)}…` : s;                          // a name stays readable
 }
 
 const num = (n) => (typeof n === 'number' ? n.toLocaleString('en-US') : String(n));
@@ -78,7 +79,7 @@ export function describe(ev, { wide = false } = {}) {
     }
     if (kind === 'leaf' && d.leaf) { row.where = d.leaf.protocol || 'pipe'; row.summary = `${d.leaf.from_state} → ${d.leaf.to_state} · leaf ${short(d.leaf.leaf, wide)}${d.leaf.batch != null ? ` · batch ${d.leaf.batch}` : ''}`; row.tone = 'quiet'; }
     if (kind === 'ack' && d.ack) { row.where = d.ack.scheme || 'ack'; row.summary = `${short(d.ack.envelope_id, wide)} by ${d.ack.by || '?'}${d.ack.verified ? ' ✓' : ''}`; row.tone = 'good'; }
-    if (kind === 'batch' && d.batch) { row.where = 'pipe'; row.summary = `batch ${num(d.batch.batch)} · ${d.batch.leaves} leaves · root ${short(d.batch.root, wide)}${d.batch.attested ? ' · attested' : ''}${d.batch.pushed ? ' · pushed' : ''}`; row.tone = 'info'; }
+    if (kind === 'batch' && d.batch) { row.where = 'pipe'; row.summary = `batch ${num(d.batch.batch)} · ${d.batch.leaves} ${d.batch.leaves === 1 ? 'leaf' : 'leaves'} · root ${short(d.batch.root, wide)}${d.batch.attested ? ' · attested' : ''}${d.batch.pushed ? ' · pushed' : ''}`; row.tone = 'info'; }
     if (kind === 'lost' && d.lost) { row.where = 'pipe'; row.chain = chainName((d.address || '').split('/')[2] || ''); row.summary = `${short(d.lost.envelope_id, wide)} · ${d.lost.reason}${d.lost.will_retry ? ' · will retry' : ''}`; row.tone = 'warn'; }
     if (kind === 'dropped' && d.dropped) { row.where = d.dropped.handler || ''; row.summary = `${short(d.dropped.envelope_id, wide)} · ${d.dropped.reason}`; row.tone = 'bad'; }
     if (kind === 'lag' && d.lag) { row.summary = `${num(d.lag.behind)} behind${d.lag.dropped ? ' · the server cut this subscriber' : ''}`; row.tone = 'warn'; }
