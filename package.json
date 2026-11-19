@@ -43,6 +43,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test test/term.test.mjs test/stream.test.mjs test/measures.test.mjs"
+    "test": "node --test test/term.test.mjs test/stream.test.mjs test/measures.test.mjs",
+    "prepublishOnly": "pack-guard"
   }
 }
